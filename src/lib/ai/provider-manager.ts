@@ -42,7 +42,10 @@ export class ProviderManager {
     const order = this.getProviderOrder();
 
     if (order.length === 0) {
-      throw new AppError("PROVIDER_UNAVAILABLE", "No image providers are configured.");
+      throw new AppError(
+        "PROVIDER_NOT_CONFIGURED",
+        "Hiçbir görüntü sağlayıcısı yapılandırılmamış. POLLINATIONS_API_KEY veya HF_TOKEN ekleyin."
+      );
     }
 
     const errors: Array<{ provider: string; error: string }> = [];

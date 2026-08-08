@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { downloadFilename } from "@/lib/utils";
+import { getRandomPrompt } from "@/lib/prompts/random-prompts";
 import {
   ASPECT_RATIOS,
   RESOLUTIONS,
@@ -16,6 +17,14 @@ import type { GenerateApiResponse, ApiErrorResponse } from "@/types/generation";
 
 type GenerationState = GenerateApiResponse["generation"] | null;
 
+interface ProviderStatusResponse {
+  success: boolean;
+  providers?: {
+    anyAvailable: boolean;
+  };
+  message?: string;
+}
+
 export function GenerationForm() {
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState<string>("realistic");
@@ -23,13 +32,38 @@ export function GenerationForm() {
   const [resolutionIndex, setResolutionIndex] = useState(2);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [configWarning, setConfigWarning] = useState<string | null>(null);
   const [generation, setGeneration] = useState<GenerationState>(null);
 
   const resolution = RESOLUTIONS[resolutionIndex];
 
+  useEffect(() => {
+    async function checkStatus() {
+      try {
+        const response = await fetch("/api/status");
+        const data = (await response.json()) as ProviderStatusResponse;
+
+        if (data.success && data.providers && !data.providers.anyAvailable) {
+          setConfigWarning(
+            "Görüntü sağlayıcısı yapılandırılmamış. Vercel/hosting ortamında POLLINATIONS_API_KEY veya HF_TOKEN ayarlayın."
+          );
+        }
+      } catch {
+        // Status check is optional
+      }
+    }
+
+    checkStatus();
+  }, []);
+
+  function handleRandomPrompt() {
+    setPrompt(getRandomPrompt());
+    setError(null);
+  }
+
   async function handleGenerate() {
     if (!prompt.trim()) {
-      setError("Please enter a prompt to generate an image.");
+      setError("Lütfen bir prompt girin.");
       return;
     }
 
@@ -55,14 +89,14 @@ export function GenerationForm() {
 
       if (!response.ok || !data.success) {
         const message =
-          "error" in data ? data.error.message : "Generation failed.";
+          "error" in data ? data.error.message : "Görüntü üretilemedi.";
         setError(message);
         return;
       }
 
       setGeneration(data.generation);
     } catch {
-      setError("Unable to connect to the server. Please try again.");
+      setError("Sunucuya bağlanılamadı. Lütfen tekrar deneyin.");
     } finally {
       setLoading(false);
     }
@@ -83,7 +117,7 @@ export function GenerationForm() {
       link.remove();
       URL.revokeObjectURL(url);
     } catch {
-      setError("Failed to download the image. Please try again.");
+      setError("Görüntü indirilemedi. Lütfen tekrar deneyin.");
     }
   }
 
@@ -95,24 +129,46 @@ export function GenerationForm() {
   return (
     <div className="space-y-8">
       <section className="space-y-6 rounded-xl border border-border bg-card p-6">
+        {configWarning && (
+          <div
+            role="status"
+            className="rounded-md border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
+          >
+            {configWarning}
+          </div>
+        )}
+
         <div className="space-y-2">
-          <Label htmlFor="prompt">Describe your image</Label>
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="prompt">Görselinizi tanımlayın</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleRandomPrompt}
+              disabled={loading}
+              aria-label="Rastgele prompt seç"
+            >
+              Rastgele
+            </Button>
+          </div>
           <Textarea
             id="prompt"
-            placeholder="A cinematic landscape with mountains at sunset..."
+            placeholder="Gün batımında sinematik dağ manzarası..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             disabled={loading}
             aria-describedby="prompt-hint"
           />
           <p id="prompt-hint" className="text-xs text-muted-foreground">
-            Be descriptive for better results. Max 2000 characters.
+            Detaylı açıklamalar daha iyi sonuç verir. Rastgele butonu yüzlerce
+            farklı yaratıcı prompt üretir.
           </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="style">Style</Label>
+            <Label htmlFor="style">Stil</Label>
             <Select
               id="style"
               value={style}
@@ -128,7 +184,7 @@ export function GenerationForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="aspectRatio">Aspect Ratio</Label>
+            <Label htmlFor="aspectRatio">En-boy oranı</Label>
             <Select
               id="aspectRatio"
               value={aspectRatio}
@@ -144,7 +200,7 @@ export function GenerationForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="resolution">Resolution</Label>
+            <Label htmlFor="resolution">Çözünürlük</Label>
             <Select
               id="resolution"
               value={resolutionIndex}
@@ -179,10 +235,10 @@ export function GenerationForm() {
             {loading ? (
               <>
                 <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                Generating...
+                Üretiliyor...
               </>
             ) : (
-              "Generate"
+              "Üret"
             )}
           </Button>
         </div>
@@ -190,7 +246,7 @@ export function GenerationForm() {
 
       {(loading || generation) && (
         <section className="space-y-4" aria-live="polite">
-          <h2 className="text-lg font-semibold">Generated Image</h2>
+          <h2 className="text-lg font-semibold">Oluşturulan Görsel</h2>
 
           <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-border bg-card">
             {loading ? (
@@ -198,7 +254,7 @@ export function GenerationForm() {
                 <div className="space-y-3 text-center">
                   <span className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   <p className="text-sm text-muted-foreground">
-                    Creating your image...
+                    Görseliniz oluşturuluyor...
                   </p>
                 </div>
               </div>
@@ -217,14 +273,14 @@ export function GenerationForm() {
           {generation && !loading && (
             <div className="flex flex-wrap items-center gap-3">
               <Button onClick={handleDownload} variant="outline">
-                Download
+                İndir
               </Button>
               <Button onClick={handleNewGeneration} variant="secondary">
-                New Generation
+                Yeni Görsel
               </Button>
               {generation.provider && (
                 <span className="text-xs text-muted-foreground">
-                  via {generation.provider}
+                  {generation.provider}
                   {generation.model ? ` / ${generation.model}` : ""}
                 </span>
               )}

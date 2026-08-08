@@ -2,6 +2,7 @@ export type AppErrorCode =
   | "INVALID_REQUEST"
   | "RATE_LIMITED"
   | "PROVIDER_UNAVAILABLE"
+  | "PROVIDER_NOT_CONFIGURED"
   | "PROVIDER_TIMEOUT"
   | "PROVIDER_QUOTA_EXCEEDED"
   | "GENERATION_FAILED"
@@ -15,7 +16,9 @@ export const ERROR_MESSAGES: Record<AppErrorCode, string> = {
   INVALID_REQUEST: "The request was invalid. Please check your input and try again.",
   RATE_LIMITED: "You have reached the generation limit. Please try again later.",
   PROVIDER_UNAVAILABLE:
-    "The image service is temporarily unavailable. Please try again in a moment.",
+    "Görüntü servisi geçici olarak kullanılamıyor. Lütfen biraz sonra tekrar deneyin.",
+  PROVIDER_NOT_CONFIGURED:
+    "Görüntü üretimi yapılandırılmamış. Sunucuda POLLINATIONS_API_KEY veya HF_TOKEN ayarlanmalı.",
   PROVIDER_TIMEOUT:
     "Image generation took too long. Please try again with a simpler prompt.",
   PROVIDER_QUOTA_EXCEEDED:
@@ -72,6 +75,8 @@ function getDefaultStatusCode(code: AppErrorCode): number {
       return 429;
     case "PROVIDER_TIMEOUT":
       return 504;
+    case "PROVIDER_NOT_CONFIGURED":
+      return 503;
     case "PROVIDER_UNAVAILABLE":
     case "GENERATION_FAILED":
     case "STORAGE_FAILED":
