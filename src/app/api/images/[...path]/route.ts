@@ -1,11 +1,29 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
+import { getImage } from "@/lib/storage/image-cache";
+import { resolveLocalStoragePath } from "@/lib/storage/providers/local";
 import { NextRequest, NextResponse } from "next/server";
-import { getEnv } from "@/lib/config/env";
 import { AppError } from "@/lib/errors/app-error";
 import { errorResponse } from "@/lib/api/response";
 
 const SAFE_KEY_PATTERN = /^[a-zA-Z0-9/_\-.]+$/;
+
+function contentTypeFromKey(key: string): string {
+  const extension = key.split(".").pop()?.toLowerCase();
+  switch (extension) {
+    case "png":
+      return "image/png";
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "webp":
+      return "image/webp";
+    case "gif":
+      return "image/gif";
+    default:
+      return "application/octet-stream";
+  }
+}
 
 export async function GET(
   _request: NextRequest,
@@ -19,20 +37,20 @@ export async function GET(
       throw new AppError("INVALID_REQUEST", "Invalid image path.");
     }
 
-    const env = getEnv();
-    const filePath = join(env.STORAGE_LOCAL_PATH, key);
+    const cached = getImage(key);
+    if (cached) {
+      return new NextResponse(new Uint8Array(cached.data), {
+        headers: {
+          "Content-Type": cached.contentType,
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    }
 
+    const basePath = resolveLocalStoragePath();
+    const filePath = join(basePath, key);
     const data = await readFile(filePath);
-
-    const extension = key.split(".").pop()?.toLowerCase();
-    const contentType =
-      extension === "png"
-        ? "image/png"
-        : extension === "jpg" || extension === "jpeg"
-          ? "image/jpeg"
-          : extension === "webp"
-            ? "image/webp"
-            : "application/octet-stream";
+    const contentType = contentTypeFromKey(key);
 
     return new NextResponse(data, {
       headers: {

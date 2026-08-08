@@ -24,8 +24,8 @@ const envSchema = z.object({
   SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 
-  // Storage
-  STORAGE_PROVIDER: z.enum(["local", "s3", "supabase"]).default("local"),
+  // Storage (memory on Vercel, local disk on dev)
+  STORAGE_PROVIDER: z.enum(["local", "memory", "s3", "supabase"]).default("local"),
   STORAGE_LOCAL_PATH: z.string().default("./storage"),
   STORAGE_PUBLIC_URL: z.string().optional(),
 

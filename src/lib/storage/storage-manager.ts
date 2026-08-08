@@ -1,6 +1,8 @@
 import { getEnv } from "@/lib/config/env";
+import { isServerlessEnvironment } from "@/lib/storage/image-cache";
 import { AppError } from "@/lib/errors/app-error";
 import { LocalStorageProvider } from "./providers/local";
+import { MemoryStorageProvider } from "./providers/memory";
 import { S3StorageProvider } from "./providers/s3";
 import { SupabaseStorageProvider } from "./providers/supabase";
 import type { ImageStorage, ImageStorageResult, StorageUploadOptions } from "./types";
@@ -10,12 +12,19 @@ export class StorageManager {
 
   constructor() {
     const env = getEnv();
+    const publicUrl = env.STORAGE_PUBLIC_URL ?? env.NEXT_PUBLIC_APP_URL;
     const providers: ImageStorage[] = [];
+
+    try {
+      providers.push(new MemoryStorageProvider(publicUrl));
+    } catch {
+      // Memory storage should always be available
+    }
 
     try {
       providers.push(new LocalStorageProvider());
     } catch {
-      // Local storage should always be available
+      // Local disk optional
     }
 
     try {
@@ -32,13 +41,29 @@ export class StorageManager {
       // Supabase not configured
     }
 
-    const preferred = providers.find((p) => p.name === env.STORAGE_PROVIDER);
-    const available = providers.find((p) => p.isAvailable());
+    const preferredName =
+      isServerlessEnvironment() && env.STORAGE_PROVIDER === "local"
+        ? "memory"
+        : env.STORAGE_PROVIDER;
 
-    this.provider =
-      preferred?.isAvailable()
-        ? preferred
-        : available ?? new LocalStorageProvider();
+    const preferred = providers.find((p) => p.name === preferredName);
+
+    if (preferred?.isAvailable()) {
+      this.provider = preferred;
+      return;
+    }
+
+    // On Vercel/serverless: memory first (no disk writes required)
+    if (isServerlessEnvironment()) {
+      const memory = providers.find((p) => p.name === "memory");
+      if (memory) {
+        this.provider = memory;
+        return;
+      }
+    }
+
+    const available = providers.find((p) => p.isAvailable());
+    this.provider = available ?? new MemoryStorageProvider(publicUrl);
   }
 
   async upload(options: StorageUploadOptions): Promise<ImageStorageResult> {
