@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const IMAGE_MODELS = [
+  "turbo",
+  "flux",
+  "ghibli",
+  "dreamshaper",
+  "kontext",
+] as const;
+
 export const ASPECT_RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:4"] as const;
 export const STYLES = [
   "realistic",
@@ -44,7 +52,7 @@ export const generateRequestSchema = z.object({
     .max(MAX_DIMENSION),
   aspectRatio: z.enum(ASPECT_RATIOS).optional(),
   style: z.enum(STYLES).optional(),
-  model: z.string().max(200).optional(),
+  model: z.enum(IMAGE_MODELS).optional().default("turbo"),
   seed: z.number().int().min(0).max(2147483647).optional(),
 });
 

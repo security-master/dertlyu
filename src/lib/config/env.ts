@@ -4,8 +4,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 
   // Provider configuration
-  IMAGE_PROVIDER_PRIMARY: z.string().default("pollinations"),
-  IMAGE_PROVIDER_FALLBACK: z.string().optional(),
+  IMAGE_PROVIDER_PRIMARY: z.string().default("pollinations-free"),
+  IMAGE_PROVIDER_FALLBACK: z.string().optional().default("pollinations"),
 
   POLLINATIONS_API_KEY: z.string().optional(),
   POLLINATIONS_BASE_URL: z.string().default("https://gen.pollinations.ai"),

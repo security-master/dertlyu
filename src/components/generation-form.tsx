@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { IMAGE_MODEL_OPTIONS, type ImageModelId } from "@/lib/constants/image-models";
 import { downloadFilename } from "@/lib/utils";
 import { getRandomPrompt } from "@/lib/prompts/random-prompts";
 import {
@@ -17,44 +18,18 @@ import type { GenerateApiResponse, ApiErrorResponse } from "@/types/generation";
 
 type GenerationState = GenerateApiResponse["generation"] | null;
 
-interface ProviderStatusResponse {
-  success: boolean;
-  providers?: {
-    anyAvailable: boolean;
-  };
-  message?: string;
-}
-
 export function GenerationForm() {
   const [prompt, setPrompt] = useState("");
+  const [model, setModel] = useState<ImageModelId>("turbo");
   const [style, setStyle] = useState<string>("realistic");
   const [aspectRatio, setAspectRatio] = useState<string>("1:1");
-  const [resolutionIndex, setResolutionIndex] = useState(2);
+  const [resolutionIndex, setResolutionIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [configWarning, setConfigWarning] = useState<string | null>(null);
   const [generation, setGeneration] = useState<GenerationState>(null);
 
   const resolution = RESOLUTIONS[resolutionIndex];
-
-  useEffect(() => {
-    async function checkStatus() {
-      try {
-        const response = await fetch("/api/status");
-        const data = (await response.json()) as ProviderStatusResponse;
-
-        if (data.success && data.providers && !data.providers.anyAvailable) {
-          setConfigWarning(
-            "Görüntü sağlayıcısı yapılandırılmamış. Vercel/hosting ortamında POLLINATIONS_API_KEY veya HF_TOKEN ayarlayın."
-          );
-        }
-      } catch {
-        // Status check is optional
-      }
-    }
-
-    checkStatus();
-  }, []);
+  const selectedModel = IMAGE_MODEL_OPTIONS.find((m) => m.id === model);
 
   function handleRandomPrompt() {
     setPrompt(getRandomPrompt());
@@ -80,6 +55,7 @@ export function GenerationForm() {
           height: resolution.height,
           aspectRatio,
           style,
+          model,
         }),
       });
 
@@ -129,14 +105,10 @@ export function GenerationForm() {
   return (
     <div className="space-y-8">
       <section className="space-y-6 rounded-xl border border-border bg-card p-6">
-        {configWarning && (
-          <div
-            role="status"
-            className="rounded-md border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
-          >
-            {configWarning}
-          </div>
-        )}
+        <div className="rounded-md border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+          Tüm modeller <strong className="text-foreground">ücretsiz</strong> —
+          API anahtarı gerekmez. Turbo en hızlı seçenek.
+        </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
@@ -166,7 +138,28 @@ export function GenerationForm() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-2">
+            <Label htmlFor="model">Model</Label>
+            <Select
+              id="model"
+              value={model}
+              onChange={(e) => setModel(e.target.value as ImageModelId)}
+              disabled={loading}
+            >
+              {IMAGE_MODEL_OPTIONS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label} ({m.badge})
+                </option>
+              ))}
+            </Select>
+            {selectedModel && (
+              <p className="text-xs text-muted-foreground">
+                {selectedModel.description}
+              </p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="style">Stil</Label>
             <Select
@@ -278,10 +271,9 @@ export function GenerationForm() {
               <Button onClick={handleNewGeneration} variant="secondary">
                 Yeni Görsel
               </Button>
-              {generation.provider && (
+              {generation.model && (
                 <span className="text-xs text-muted-foreground">
-                  {generation.provider}
-                  {generation.model ? ` / ${generation.model}` : ""}
+                  {generation.model} · ücretsiz
                 </span>
               )}
             </div>

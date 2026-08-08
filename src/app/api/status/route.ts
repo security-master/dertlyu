@@ -7,8 +7,6 @@ export async function GET() {
   return jsonResponse({
     success: true,
     providers: status,
-    message: status.anyAvailable
-      ? "At least one image provider is configured."
-      : "No image providers are configured. Set POLLINATIONS_API_KEY or HF_TOKEN on the server.",
+    message: "Ücretsiz görüntü üretimi hazır. API anahtarı gerekmez.",
   });
 }

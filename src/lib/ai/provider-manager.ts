@@ -7,6 +7,7 @@ import type {
   ImageProvider,
 } from "@/types/generation";
 import { HuggingFaceProvider } from "./providers/huggingface";
+import { PollinationsFreeProvider } from "./providers/pollinations-free";
 import { PollinationsProvider } from "./providers/pollinations";
 
 const MAX_RETRIES = 2;
@@ -22,9 +23,11 @@ export class ProviderManager {
     this.primaryName = env.IMAGE_PROVIDER_PRIMARY;
     this.fallbackName = env.IMAGE_PROVIDER_FALLBACK;
 
+    const pollinationsFree = new PollinationsFreeProvider();
     const pollinations = new PollinationsProvider();
     const huggingface = new HuggingFaceProvider();
 
+    this.providers.set(pollinationsFree.name, pollinationsFree);
     this.providers.set(pollinations.name, pollinations);
     this.providers.set(huggingface.name, huggingface);
   }
