@@ -59,9 +59,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Pollinations now **requires** an API key. Get one at [enter.pollinations.ai](https://enter.pollinations.ai) and set `POLLINATIONS_API_KEY` in your hosting environment (Vercel → Settings → Environment Variables).
+**No API key required** — the default `pollinations-free` provider uses `image.pollinations.ai` with models like Turbo (fast) and Flux (quality).
 
-Check provider status: `GET /api/status`
+Optional: set `POLLINATIONS_API_KEY` for Pollinations Pro via `gen.pollinations.ai`.
 
 ### Database Setup (Production)
 
