@@ -9,9 +9,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
 });
-
-process.env.VITE_CONFIG_NATIVE_IGNORE_WARNING = "true";
