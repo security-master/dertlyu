@@ -64,6 +64,7 @@ export interface GenerateApiResponse {
     id: string;
     status: GenerationStatus;
     imageUrl: string | null;
+    imageDataUrl?: string | null;
     prompt: string;
     width: number;
     height: number;

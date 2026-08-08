@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import type { GenerationStatus } from "@/types/generation";
 
@@ -83,13 +82,12 @@ export function HistoryGrid() {
           href={`/history/${item.id}`}
           className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-primary/50"
         >
-          {item.imageUrl && item.status === "completed" ? (
-            <Image
-              src={item.imageUrl}
+          {item.status === "completed" ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={item.imageUrl ?? `/api/generations/${item.id}/image`}
               alt={item.prompt}
-              fill
-              className="object-cover transition-transform group-hover:scale-105"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="h-full w-full object-cover transition-transform group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full items-center justify-center p-4 text-center text-xs text-muted-foreground">

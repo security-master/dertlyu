@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -18,6 +17,11 @@ import type { GenerateApiResponse, ApiErrorResponse } from "@/types/generation";
 
 type GenerationState = GenerateApiResponse["generation"] | null;
 
+function getDisplaySrc(generation: GenerationState): string | null {
+  if (!generation) return null;
+  return generation.imageDataUrl ?? generation.imageUrl ?? null;
+}
+
 export function GenerationForm() {
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState<ImageModelId>("turbo");
@@ -30,6 +34,7 @@ export function GenerationForm() {
 
   const resolution = RESOLUTIONS[resolutionIndex];
   const selectedModel = IMAGE_MODEL_OPTIONS.find((m) => m.id === model);
+  const displaySrc = getDisplaySrc(generation);
 
   function handleRandomPrompt() {
     setPrompt(getRandomPrompt());
@@ -79,15 +84,26 @@ export function GenerationForm() {
   }
 
   async function handleDownload() {
-    if (!generation?.imageUrl) return;
+    const src = getDisplaySrc(generation);
+    if (!src) return;
 
     try {
-      const response = await fetch(generation.imageUrl);
+      if (src.startsWith("data:")) {
+        const link = document.createElement("a");
+        link.href = src;
+        link.download = downloadFilename("jpg");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return;
+      }
+
+      const response = await fetch(src);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = downloadFilename("webp");
+      link.download = downloadFilename("jpg");
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -251,14 +267,12 @@ export function GenerationForm() {
                   </p>
                 </div>
               </div>
-            ) : generation?.imageUrl ? (
-              <Image
-                src={generation.imageUrl}
-                alt={generation.prompt}
-                fill
-                className="object-contain"
-                sizes="(max-width: 768px) 100vw, 600px"
-                priority
+            ) : displaySrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={displaySrc}
+                alt={generation?.prompt ?? "Generated image"}
+                className="h-full w-full object-contain"
               />
             ) : null}
           </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -112,14 +111,12 @@ export default function GenerationDetailPage() {
 
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-card">
-          {generation.imageUrl ? (
-            <Image
-              src={generation.imageUrl}
+          {generation.status === "completed" ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/api/generations/${generation.id}/image`}
               alt={generation.prompt}
-              fill
-              className="object-contain"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
+              className="h-full w-full object-contain"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">

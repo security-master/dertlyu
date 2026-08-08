@@ -7,6 +7,11 @@ import {
   buildStorageKey,
   getStorageManager,
 } from "@/lib/storage/storage-manager";
+import {
+  putGenerationImage,
+  getGenerationImage,
+  toDataUrl,
+} from "@/lib/storage/generation-image-store";
 import { getImageExtension } from "@/lib/utils";
 import type { GenerateRequestInput } from "@/lib/validation/generate";
 import { validatePromptSafety } from "@/lib/validation/generate";
@@ -66,17 +71,21 @@ export class GenerationService {
       const extension = getImageExtension(result.contentType);
       const storageKey = buildStorageKey(record.id, extension);
 
-      const stored = await storageManager.upload({
+      await storageManager.upload({
         key: storageKey,
         data: result.imageData,
         contentType: result.contentType,
       });
 
+      putGenerationImage(record.id, result.imageData, result.contentType);
+
+      const imageUrl = `/api/generations/${record.id}/image`;
+
       const updated = await repository.update(record.id, {
         provider: result.provider,
         model: result.model,
-        imageUrl: stored.url,
-        storageKey: stored.key,
+        imageUrl,
+        storageKey: storageKey,
         status: "completed",
         completedAt: new Date(),
       });
@@ -137,12 +146,19 @@ export class GenerationService {
   }
 
   toApiResponse(record: GenerationData): GenerateApiResponse {
+    const cached = getGenerationImage(record.id);
+    const imageUrl = `/api/generations/${record.id}/image`;
+    const imageDataUrl = cached
+      ? toDataUrl(cached.data, cached.contentType)
+      : null;
+
     return {
       success: true,
       generation: {
         id: record.id,
         status: record.status,
-        imageUrl: record.imageUrl,
+        imageUrl,
+        imageDataUrl,
         prompt: record.prompt,
         width: record.width,
         height: record.height,

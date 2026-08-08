@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       generations: generations.map((g) => ({
         id: g.id,
         status: g.status,
-        imageUrl: g.imageUrl,
+        imageUrl: g.imageUrl ?? `/api/generations/${g.id}/image`,
         prompt: g.prompt,
         width: g.width,
         height: g.height,
