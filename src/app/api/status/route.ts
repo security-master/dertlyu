@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { getProviderStatus } from "@/lib/config/providers";
 import { jsonResponse } from "@/lib/api/response";
 
