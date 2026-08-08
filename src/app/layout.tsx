@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: "AI Image Generator",
   description:
     "Generate stunning AI images from text prompts with a modern, provider-independent platform.",
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
     title: "AI Image Generator",
     description: "Generate stunning AI images from text prompts.",

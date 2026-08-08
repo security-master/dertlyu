@@ -171,10 +171,12 @@ External providers are mocked — no real API calls in tests.
 
 ### Vercel (recommended)
 
-1. Push to GitHub
-2. Import project in Vercel
+1. Push to GitHub (branch `main`)
+2. Import [security-master/dertlyu](https://github.com/security-master/dertlyu) in Vercel
 3. Set environment variables from `.env.example`
 4. Deploy
+
+**Important for Vercel:** local file storage does not persist on serverless. Use `STORAGE_PROVIDER=s3` (R2) or `supabase` in production.
 
 Required for production:
 - `DATABASE_URL` (PostgreSQL — e.g. Supabase, Neon)
