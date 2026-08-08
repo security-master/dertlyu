@@ -22,7 +22,12 @@ export class LocalStorage implements ImageStorage {
   readonly name = "local";
 
   private root() {
-    return path.resolve(process.cwd(), getEnv().storage.localDir);
+    // Keep the resolved root under a fixed project subfolder for bundler tracing.
+    const configured = getEnv().storage.localDir.replace(/^(\.\/)+/, "");
+    const safe = configured.startsWith(".data/")
+      ? configured
+      : path.join(".data", "images");
+    return path.resolve(/* turbopackIgnore: true */ process.cwd(), safe);
   }
 
   async put(options: {
