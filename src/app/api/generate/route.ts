@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server";
-import { getAuthUser, getClientIdentifier } from "@/lib/auth/session";
+import { getAuthUser } from "@/lib/auth/session";
 import { AppError } from "@/lib/errors/app-error";
 import { errorResponse, jsonResponse } from "@/lib/api/response";
 import { generateRequestId, logger } from "@/lib/logger";
-import { getRateLimiter, getRateLimitForUser } from "@/lib/rate-limit";
 import { generateRequestSchema } from "@/lib/validation/generate";
 import { getGenerationService } from "@/services/generation-service";
 
@@ -30,17 +29,6 @@ export async function POST(request: NextRequest) {
 
     const authHeader = request.headers.get("authorization");
     const user = await getAuthUser(authHeader);
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-      ?? request.headers.get("x-real-ip");
-
-    const identifier = getClientIdentifier(user, ip);
-    const limit = getRateLimitForUser(Boolean(user));
-    const rateLimiter = getRateLimiter();
-    const rateResult = await rateLimiter.check(identifier, limit);
-
-    if (!rateResult.success) {
-      throw new AppError("RATE_LIMITED");
-    }
 
     const service = getGenerationService();
     const result = await service.generate(

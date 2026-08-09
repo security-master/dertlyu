@@ -14,7 +14,7 @@ export type AppErrorCode =
 
 export const ERROR_MESSAGES: Record<AppErrorCode, string> = {
   INVALID_REQUEST: "The request was invalid. Please check your input and try again.",
-  RATE_LIMITED: "You have reached the generation limit. Please try again later.",
+  RATE_LIMITED: "Üretim limitine ulaştınız. Lütfen daha sonra tekrar deneyin.",
   PROVIDER_UNAVAILABLE:
     "Görüntü servisi geçici olarak kullanılamıyor. Lütfen biraz sonra tekrar deneyin.",
   PROVIDER_NOT_CONFIGURED:

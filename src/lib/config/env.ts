@@ -42,11 +42,12 @@ const envSchema = z.object({
   S3_PUBLIC_URL: z.string().optional(),
   S3_ENDPOINT: z.string().optional(),
 
-  // Rate limiting
+  // Rate limiting (disabled by default — set RATE_LIMIT_ENABLED=true to enable)
+  RATE_LIMIT_ENABLED: z.coerce.boolean().default(false),
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-  RATE_LIMIT_ANONYMOUS: z.coerce.number().default(10),
-  RATE_LIMIT_AUTHENTICATED: z.coerce.number().default(50),
+  RATE_LIMIT_ANONYMOUS: z.coerce.number().default(10000),
+  RATE_LIMIT_AUTHENTICATED: z.coerce.number().default(10000),
   RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().default(3600),
 
   // App
@@ -89,4 +90,8 @@ export function isSupabaseAuthConfigured(): boolean {
   return Boolean(
     process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY
   );
+}
+
+export function isRateLimitEnabled(): boolean {
+  return process.env.RATE_LIMIT_ENABLED === "true";
 }
